@@ -1,0 +1,9 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+
+  tasks:
+    - shell: echo {{ item }} >> results
+      with_vault_kv:
+        - key=secret/example/production/username
+        - key=secret/example/production/password
