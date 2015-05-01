@@ -19,8 +19,24 @@ class LookupModule(object):
     url = "%s/v1/%s" % (self.vault_url, key)
     opener = urllib2.build_opener()
     opener.addheaders.append(('cookie', 'token=%s' % token))
-    r = opener.open(url)
-    data = r.read()
+
+    try:
+      r = opener.open(url)
+      data = r.read()
+    except urllib2.HTTPError, err:
+      data = err.read()
+      msg = ""
+
+      try:
+        item = json.loads(data)
+
+        if 'errors' in item:
+          msg = item['errors']
+      except:
+          msg = "unknown error"
+
+      raise errors.AnsibleError("vault message '%s'" % msg)
+
 
     try:
       item = json.loads(data)
@@ -45,6 +61,8 @@ class LookupModule(object):
         values.append(results)
 
     except Exception, e:
+      if 'token' in term:
+        term = term.split(' ')[0] + " token=*****"
       raise errors.AnsibleError("Term '%s'. Error %s" % (term, e))
 
     return values
